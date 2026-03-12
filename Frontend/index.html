@@ -22,7 +22,8 @@
                 <div class="row">
                     <div class="col-4">
                         <a class="navbar-brand" href="#">
-                            <img src="/Frontend/Images/image.png" alt="" width="145" class="d-inline-block align-text-top">
+                            <img src="/Frontend/Images/image.png" alt="" width="145"
+                                class="d-inline-block align-text-top">
                         </a>
                     </div>
                     <div class="col-8 my-4">
@@ -150,14 +151,33 @@
             <div id="login-form" class="col-3 d-flex align-items-center">
                 <main class="form-signin w-75">
                     <form>
-                        <h1 class="h4 mb-3 fw-normal text-center">Log In</h1>
+                        <h1 class="h4 mb-4 fw-normal text-center">Log In</h1>
 
-                        <div class="form-floating">
-                            <input type="text" class="form-control" id="floatingInput" placeholder="">
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="userRole" id="roleOwner"
+                                    value="owner" checked>
+                                <label class="form-check-label" for="roleOwner">Owner</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="userRole" id="roleVendor"
+                                    value="vendor">
+                                <label class="form-check-label" for="roleVendor">Vendor</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="userRole" id="roleFuelStation"
+                                    value="station">
+                                <label class="form-check-label" for="roleFuelStation">Fuel Station</label>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="floatingInput" placeholder="Username">
                             <label for="floatingInput">Username</label>
                         </div>
-                        <div class="form-floating">
-                            <input type="password" class="form-control" id="floatingPassword" placeholder="">
+
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
                             <label for="floatingPassword">Password</label>
                         </div>
 
