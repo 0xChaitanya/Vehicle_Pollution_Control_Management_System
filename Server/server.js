@@ -1,4 +1,5 @@
 const express = require('express');
+const hashing = require('bcrypt');
 const app = express();
 const cors = require('cors')
 const PORT = 3000;
@@ -9,6 +10,7 @@ var pg = require('pg');
 var conString = 'postgres://postgres:my_postgres@localhost:5432/PUCCDB';
 
 app.get('/pucc_issued', async (req, res) => {
+  // console.log(await hashing.compare('my_password', '$2a$12$P3o.0OPcJtgzeXYYrxI/KuSXcRONjbyp.6yv2/IawJT92I6imXpsO'))
 
   var client = new pg.Client(conString);
   await client.connect();
@@ -48,8 +50,6 @@ app.get('/pucc_defaulter', async (req, res) => {
 });
 
 app.get('/pucc_num_type', async (req, res) => {
-  var date = new Date().toISOString();
-
   var client = new pg.Client(conString);
   await client.connect();
 
@@ -60,16 +60,21 @@ app.get('/pucc_num_type', async (req, res) => {
 });
 
 app.get('/registered_vendors', async (req, res) => {
-  var date = new Date().toISOString();
-
   var client = new pg.Client(conString);
   await client.connect();
 
   var result = await client.query('SELECT "Vendor_No", "GST_No", "Name", "Location" FROM "Vendor";');
-  console.log(result.rows);
+  // console.log(result.rows);
   await client.end();
 
   res.send(result.rows);
+});
+
+app.use(express.json());
+app.post('/login_user', async (req, res) => {
+  console.log(req.body);
+
+  res.send(req.body);
 });
 
 app.listen(PORT, () => {

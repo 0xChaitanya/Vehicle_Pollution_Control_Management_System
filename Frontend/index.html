@@ -46,10 +46,10 @@
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Home</a>
+                            <a class="nav-link active" aria-current="page" href="index.html">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Registered Centers</a>
+                            <a class="nav-link" href="registered_centers.html">Registered Vendors</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Check PUCC status</a>
@@ -135,8 +135,10 @@
                                             style="font-size: 18px; color: white; border-radius: 15px;">
                                             Certificate by Fuel</h2>
                                         <p class="card-text text-center bg-info text-white"><label
-                                                style="padding:20px 10px 25px 15px;font-size:16px;font-weight:600;border-radius:5px;">Petrol: <label id="pucc_num_petrol"></label>
-                                                <br> Diesel: <label id="pucc_num_diesel"></label> <br> CNG: <label id="pucc_num_cng"></label> </label>
+                                                style="padding:20px 10px 25px 15px;font-size:16px;font-weight:600;border-radius:5px;">Petrol:
+                                                <label id="pucc_num_petrol"></label>
+                                                <br> Diesel: <label id="pucc_num_diesel"></label> <br> CNG: <label
+                                                    id="pucc_num_cng"></label> </label>
                                         </p>
                                     </div>
                                 </div>
@@ -150,7 +152,7 @@
 
             <div id="login-form" class="col-3 d-flex align-items-center">
                 <main class="form-signin w-75">
-                    <form>
+                    <form name="login"  onsubmit="return send_login()">
                         <h1 class="h4 mb-4 fw-normal text-center">Log In</h1>
 
                         <div class="d-flex justify-content-center mb-4">
@@ -172,12 +174,12 @@
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="floatingInput" placeholder="Username">
+                            <input type="text" class="form-control" if="floatingInput" placeholder="Username" name="username" required>
                             <label for="floatingInput">Username</label>
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password" required>
                             <label for="floatingPassword">Password</label>
                         </div>
 
@@ -189,6 +191,28 @@
     </div>
 
     <script>
+        async function send_login(){
+            try{
+                const returnResponse = await fetch('http://localhost:3000/login_user', {
+                    method : "POST",
+
+                    body: JSON.stringify({
+                        role: document.forms['login']['userRole'].value,
+                        username: document.forms['login']['username'].value,
+                        password: document.forms['login']['password'].value
+                    }),
+
+                    headers: {'Content-type': 'application/json; charset=UTF-8'}
+                });
+            }
+            catch(err){
+                console.error("The error is : " + err);
+            }
+            finally{
+                console.log("Logged in successfully");
+            }
+        }
+        
         fetch('http://localhost:3000/pucc_issued')
             .then(response => response.json())
             .then(data => {
@@ -207,7 +231,7 @@
                 document.getElementById('pucc_defaulter').innerText = data.count;
             });
 
-         fetch('http://localhost:3000/pucc_num_type')
+        fetch('http://localhost:3000/pucc_num_type')
             .then(response => response.json())
             .then(data => {
                 document.getElementById('pucc_num_petrol').innerText = data.petrol;
