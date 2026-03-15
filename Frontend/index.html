@@ -152,23 +152,23 @@
 
             <div id="login-form" class="col-3 d-flex align-items-center">
                 <main class="form-signin w-75">
-                    <form name="login"  onsubmit="return send_login()">
+                    <form name="login"  onsubmit="event.preventDefault(); send_to_validate()">
                         <h1 class="h4 mb-4 fw-normal text-center">Log In</h1>
 
                         <div class="d-flex justify-content-center mb-4">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="userRole" id="roleOwner"
-                                    value="owner" checked>
+                                    value="OWNER" checked>
                                 <label class="form-check-label" for="roleOwner">Owner</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="userRole" id="roleVendor"
-                                    value="vendor">
+                                    value="VENDOR">
                                 <label class="form-check-label" for="roleVendor">Vendor</label>
                             </div>
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="radio" name="userRole" id="roleFuelStation"
-                                    value="station">
+                                    value="FS">
                                 <label class="form-check-label" for="roleFuelStation">Fuel Station</label>
                             </div>
                         </div>
@@ -191,9 +191,9 @@
     </div>
 
     <script>
-        async function send_login(){
+        async function send_to_validate(){
             try{
-                const returnResponse = await fetch('http://localhost:3000/login_user', {
+                const returnResponse = await fetch('http://localhost:3000/validate_user', {
                     method : "POST",
 
                     body: JSON.stringify({
@@ -203,13 +203,37 @@
                     }),
 
                     headers: {'Content-type': 'application/json; charset=UTF-8'}
+
                 });
+
+                
+                if (returnResponse.ok){
+                    const response = await returnResponse.json();
+
+                    if (!response.username){
+                        alert("Username doesn't exist for the role!");
+                    }
+                    else if (!response.password){
+                        alert("Wrong credentials!");
+                    }
+                    else{
+                        if (document.forms['login']['userRole'].value == "OWNER"){
+                            window.location.href = 'http://127.0.0.1:5500/Frontend/User/home.html';
+                        }
+                        else if (document.forms['login']['userRole'].value == "VENDOR"){
+                            window.location.href = 'http://127.0.0.1:5500/Frontend/Vendor/home.html';
+                        }
+                        else{
+                            window.location.href = 'http://127.0.0.1:5500/Frontend/Fuel_Station/home.html';
+                        }
+                    }
+                }
+                else{
+                    console.log("We found some error");
+                }
             }
             catch(err){
                 console.error("The error is : " + err);
-            }
-            finally{
-                console.log("Logged in successfully");
             }
         }
         
