@@ -67,11 +67,11 @@
             <div class="col-5">
                 <div class="card shadow mb-4" style="width: 24rem; border-radius: 15px; overflow: hidden;">
 
-                    <div class="card-body text-center bg-primary text-white py-4">
+                    <div class="card-body text-center bg-primary text-white py-3">
                         <div class="mb-3">
                             <i class="fas fa-user-circle fa-5x"></i>
                         </div>
-                        <h4 class="card-title fw-bold mb-0">Ramesh Kumar</h4>
+                        <h4 id="NAME" class="card-title fw-bold mb-0"></h4>
                         <p class="card-text small opacity-75">Vehicle Owner</p>
                     </div>
 
@@ -79,23 +79,17 @@
 
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <span><i class="fas fa-id-card text-primary me-2"></i><strong>Adhaar No.</strong></span>
-                            <span class="text-secondary text-end">XXXX XXXX 1234</span>
+                            <span id="ADHAAR_NO" class="text-secondary text-end"></span>
                         </li>
 
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <span><i class="fas fa-phone text-primary me-2"></i><strong>Contact No.</strong></span>
-                            <span class="text-secondary text-end">+91 9876543210</span>
+                            <span id="CONTACT_NO" class="text-secondary text-end"></span>
                         </li>
-
-
-                        <!-- <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <span><i class="fas fa-car text-primary me-2"></i><strong>Vehicle No.</strong></span>
-                            <span class="text-secondary text-end">DL 8C AB 1234</span>
-                        </li> -->
 
                         <li class="list-group-item d-flex justify-content-between py-3">
                             <span class="fw-bold">Home Address</span>
-                            <div class="text-secondary text-end" style="font-size: 0.95rem;">
+                            <div id="HOME_ADDR" class="text-secondary text-end" style="font-size: 0.95rem;">
                                 45B Model Town, Phase 2<br>
                                 New Delhi, India 110009
                             </div>
@@ -113,22 +107,13 @@
                         <span class="badge bg-light text-dark rounded-pill">2</span>
                     </div>
 
-                    <ul class="list-group list-group-flush">
+                    <ul id ="vehicle_list" class="list-group list-group-flush">
 
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <li id="vehicle_items" class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <div class="fw-bold text-dark">DL 8C AB 1234</div>
-                                <div class="text-secondary small">Honda City</div>
+                                <div id="vehicle_number" class="fw-bold text-dark"></div>
                             </div>
-                            <span class="badge text-bg-primary rounded-pill px-3">Car</span>
-                        </li>
-
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold text-dark">DL 4S CD 5678</div>
-                                <div class="text-secondary small">Honda Activa</div>
-                            </div>
-                            <span class="badge text-bg-secondary rounded-pill px-3">Scooter</span>
+                            <span id="vehicle_type" class="badge text-bg-primary rounded-pill px-3"></span>
                         </li>
 
                     </ul>
@@ -173,7 +158,19 @@
         fetch("http://localhost:3000/load_user")
         .then(response => response.json())
         .then(data => {
-            console.log(data);
+            document.getElementById('NAME').innerHTML = data.name;
+            document.getElementById('ADHAAR_NO').innerHTML = data.adhaar;
+            document.getElementById('CONTACT_NO').innerHTML = "+91 " + data.contact;
+            document.getElementById('HOME_ADDR').innerHTML = data.home_addr;
+
+            // var parent = document.getElementById('vehicle_list');
+
+            var top = document.createElement('li');
+            top.className = 'list-group-item d-flex justify-content-between align-items-center py-3'
+            
+            top.innerHTML = data.vehicle[0].number;
+            var parent = document.getElementById('vehicle_list');
+            parent.appendChild(top);
         });
     </script>
     
