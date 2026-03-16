@@ -169,6 +169,13 @@
                 </div>
     </div>
 
+    <script>
+        fetch("http://localhost:3000/load_user")
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        });
+    </script>
     
 
     <!-- Bootstrap JS -->
