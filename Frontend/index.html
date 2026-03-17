@@ -152,7 +152,7 @@
 
             <div id="login-form" class="col-3 d-flex align-items-center">
                 <main class="form-signin w-75">
-                    <form name="login"  onsubmit="event.preventDefault(); send_to_validate()">
+                    <form name="login" onsubmit="event.preventDefault(); send_to_validate()">
                         <h1 class="h4 mb-4 fw-normal text-center">Log In</h1>
 
                         <div class="d-flex justify-content-center mb-4">
@@ -174,12 +174,14 @@
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="text" class="form-control" if="floatingInput" placeholder="Username" name="username" required>
+                            <input type="text" class="form-control" if="floatingInput" placeholder="Username"
+                                name="username" required>
                             <label for="floatingInput">Username</label>
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password" required>
+                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password"
+                                name="password" required>
                             <label for="floatingPassword">Password</label>
                         </div>
 
@@ -191,10 +193,10 @@
     </div>
 
     <script>
-        async function send_to_validate(){
-            try{
+        async function send_to_validate() {
+            try {
                 const returnResponse = await fetch('http://localhost:3000/validate_user', {
-                    method : "POST",
+                    method: "POST",
 
                     body: JSON.stringify({
                         role: document.forms['login']['userRole'].value,
@@ -202,41 +204,41 @@
                         password: document.forms['login']['password'].value
                     }),
 
-                    headers: {'Content-type': 'application/json; charset=UTF-8'}
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
 
                 });
 
-                
-                if (returnResponse.ok){
+
+                if (returnResponse.ok) {
                     const response = await returnResponse.json();
 
-                    if (!response.username){
+                    if (!response.username) {
                         alert("Username doesn't exist for the role!");
                     }
-                    else if (!response.password){
+                    else if (!response.password) {
                         alert("Wrong credentials!");
                     }
-                    else{
-                        if (document.forms['login']['userRole'].value == "OWNER"){
+                    else {
+                        if (document.forms['login']['userRole'].value == "OWNER") {
                             window.location.href = 'http://127.0.0.1:5500/Frontend/User/home.html';
                         }
-                        else if (document.forms['login']['userRole'].value == "VENDOR"){
+                        else if (document.forms['login']['userRole'].value == "VENDOR") {
                             window.location.href = 'http://127.0.0.1:5500/Frontend/Vendor/home.html';
                         }
-                        else{
+                        else {
                             window.location.href = 'http://127.0.0.1:5500/Frontend/Fuel_Station/home.html';
                         }
                     }
                 }
-                else{
+                else {
                     console.log("We found some error");
                 }
             }
-            catch(err){
+            catch (err) {
                 console.error("The error is : " + err);
             }
         }
-        
+
         fetch('http://localhost:3000/pucc_issued')
             .then(response => response.json())
             .then(data => {

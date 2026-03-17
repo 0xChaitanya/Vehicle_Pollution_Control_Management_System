@@ -190,26 +190,6 @@
 
         };
 
-
-        document.getElementById("dateSelect").addEventListener("change", function () {
-
-            let date = this.value;
-            let slotSelect = document.getElementById("slotSelect");
-
-            slotSelect.innerHTML = '<option selected disabled>Select Slot</option>';
-
-            slots[date].forEach(function (slot) {
-
-                let option = document.createElement("option");
-                option.text = slot;
-                option.value = slot;
-
-                slotSelect.appendChild(option);
-
-            });
-
-        });
-
     </script>
 </body>
 
