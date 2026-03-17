@@ -2,6 +2,7 @@ const express = require('express');
 const hashing = require('bcrypt');
 const cors = require('cors')
 const pg = require('pg');
+const { escape } = require('querystring');
 const fs = require('fs').promises;
 
 const app = express();
@@ -153,6 +154,52 @@ app.get('/load_user', async (req, res) => {
 		}
 	}
 
+
+	res.send(JSON.stringify(profile));
+});
+
+app.get('/load_vendor', async (req, res) => {
+	var client = new pg.Client(conStringAuthDB);
+	await client.connect();
+	// var vnumber = '';
+
+	//------------------------loading user_id from file---------------------------
+	try {
+		const data = await fs.readFile('../Frontend/role.json', 'utf8');
+		const obj = JSON.parse(data);
+		// console.log(obj.userid.rows[0].User_ID);
+		var vnumber = await client.query(`SELECT "Vendor_No" FROM "Users_Auth" WHERE "User_ID" = ${obj.userid.rows[0].User_ID}`);
+	}
+	catch (error) {
+		console.error("Failed reading file : ", error);
+	}
+
+	client = new pg.Client(conString);
+	await client.connect();
+
+	var details = await client.query(`SELECT * FROM "Vendor" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
+
+	var profile = { number: vnumber.rows[0].Vendor_No, name: details.rows[0].Name, gstin: details.rows[0].GST_No, type: [], location: details.rows[0].Location, total_pucc:details.rows[0].Total_PUCC_Issued, appointments: [], total_revenue : 0};
+
+	var category = await client.query(`SELECT * FROM "Vendor_Category" WHERE "Vendor_No" = '${vnumber.rows[0].Vendor_No}'`);
+
+	for (let i = 0; i < category.rows.length; i++){
+		profile.type.push(category.rows[i].Type);
+	}
+
+	var appointments_today = await client.query(`SELECT "Vehicle_No", "Fuel_Type", "Time_Slot"  FROM "Testing" NATURAL JOIN "Vehicle" NATURAL JOIN "Location_Time" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
+
+	var date = new Date().toISOString();
+	for (let i = 0; i < appointments_today.rows.length; i++){
+		if (JSON.stringify(appointments_today.rows[i].Time_Slot).split('T')[0] < `"${date.split('T')[0]}`){
+			profile.appointments.push({vehicle_no: appointments_today.rows[i].Vehicle_No, fuel: appointments_today.rows[i].Fuel_Type, time: appointments_today.rows[i].Time_Slot});
+		}
+	}
+	var revenue = await client.query(`SELECT "Price" FROM "PUCC_seller" NATURAL JOIN "Max_PUCC_Price" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No};`);
+
+	for (let i = 0; i < revenue.rows.length; i++){
+		profile.total_revenue += parseInt(revenue.rows[i].Price);
+	}
 
 	res.send(JSON.stringify(profile));
 });
