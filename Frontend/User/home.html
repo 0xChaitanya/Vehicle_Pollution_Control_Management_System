@@ -104,17 +104,17 @@
                     <div class="card-body text-white py-3 d-flex justify-content-between align-items-center"
                         style="background-color: #34a853;">
                         <h5 class="card-title fw-bold mb-0">Owned Vehicles</h5>
-                        <span class="badge bg-light text-dark rounded-pill">2</span>
+                        <span id="number_of_vehicle" class="badge bg-light text-dark rounded-pill"></span>
                     </div>
 
-                    <ul id ="vehicle_list" class="list-group list-group-flush">
+                    <ul id="vehicle_list" class="list-group list-group-flush">
 
-                        <li id="vehicle_items" class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <!-- <li id="vehicle_items" class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
                                 <div id="vehicle_number" class="fw-bold text-dark"></div>
                             </div>
                             <span id="vehicle_type" class="badge text-bg-primary rounded-pill px-3"></span>
-                        </li>
+                        </li> -->
 
                     </ul>
                 </div>
@@ -122,58 +122,95 @@
         </div>
 
         <div class="card shadow" style="border-radius: 10px; overflow: hidden; border: none;">
-                    <div class="card-body text-white py-3 d-flex justify-content-between align-items-center" style="background-color: #0dcaf0;">
-                        <h5 class="card-title fw-bold mb-0 text-white">PUCC Status</h5>
-                        <i class="fas fa-leaf text-dark"></i> </div>
+            <div class="card-body text-white py-3 d-flex justify-content-between align-items-center"
+                style="background-color: #0dcaf0;">
+                <h5 class="card-title fw-bold mb-0 text-white">PUCC Status</h5>
+                <i class="fas fa-leaf text-dark"></i>
+            </div>
 
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold text-dark">DL 8C AB 1234</div>
-                                <div class="text-secondary small">Valid till: 12 Oct 2026</div>
-                            </div>
-                            <span class="badge bg-success rounded-pill px-3">Active</span>
-                        </li>
-
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold text-dark">DL 4S CD 5678</div>
-                                <div class="small text-danger fw-semibold">Expired on: 05 Jan 2026</div>
-                            </div>
-                            <span class="badge bg-danger rounded-pill px-3">Expired</span>
-                        </li>
-
-                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                            <div>
-                                <div class="fw-bold text-dark">UP 16 XY 3333</div>
-                                <div class="text-secondary small">No record found</div>
-                            </div>
-                            <span class="badge bg-secondary rounded-pill px-3">Not Reg.</span>
-                        </li>
-                    </ul>
-                </div>
+            <ul id="pucc_status" class="list-group list-group-flush">
+                <!-- <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="fw-bold text-dark"></div>
+                        <div class="text-secondary small"></div>
+                    </div>
+                    <span class="badge bg-success rounded-pill px-3"></span>
+                </li> -->
+            </ul>
+        </div>
     </div>
 
     <script>
         fetch("http://localhost:3000/load_user")
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('NAME').innerHTML = data.name;
-            document.getElementById('ADHAAR_NO').innerHTML = data.adhaar;
-            document.getElementById('CONTACT_NO').innerHTML = "+91 " + data.contact;
-            document.getElementById('HOME_ADDR').innerHTML = data.home_addr;
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('NAME').innerHTML = data.name;
+                document.getElementById('ADHAAR_NO').innerHTML = data.adhaar;
+                document.getElementById('CONTACT_NO').innerHTML = "+91 " + data.contact;
+                document.getElementById('HOME_ADDR').innerHTML = data.home_addr;
 
-            // var parent = document.getElementById('vehicle_list');
+                for (let i = 0; i < data.vehicle.length; i++) {
+                    var div = document.createElement('div');
+                    div.className = 'fw-bold text-dark';
+                    div.innerHTML = data.vehicle[i].number;
 
-            var top = document.createElement('li');
-            top.className = 'list-group-item d-flex justify-content-between align-items-center py-3'
-            
-            top.innerHTML = data.vehicle[0].number;
-            var parent = document.getElementById('vehicle_list');
-            parent.appendChild(top);
-        });
-    </script>
+                    var span = document.createElement('span');
+                    span.className = 'badge rounded-pill text-bg-primary text-dark border px-3';
+                    span.innerHTML = data.vehicle[i].fuel_type;
+
+                    var top = document.createElement('li');
+                    top.className = 'list-group-item d-flex justify-content-between align-items-center py-3'
+
+                    top.appendChild(div);
+                    top.appendChild(span);
+                    var parent = document.getElementById('vehicle_list');
+                    parent.appendChild(top);
+                }
+
+                document.getElementById('number_of_vehicle').innerHTML = data.vehicle.length;
+
+                //---------------------------pucc card---------------------------------
+
+                for (let i = 0; i < data.pucc.length; i++){
+                    var div = document.createElement('div');
     
+                    var div1 = document.createElement('div');
+                    div1.className = 'fw-bold text-dark';
+                    div1.innerHTML = data.pucc[i].number;
+
+                    var div2 = document.createElement('div');
+                    div2.className = 'text-secondary small';
+                    div2.innerHTML = "Issued On : " + data.pucc[i].issued_on.split('T')[0];
+
+                    var div3 = document.createElement('div');
+                    div3.className = 'text-secondary small';
+                    div3.innerHTML = "Validity : " + data.pucc[i].validity.split('T')[0];
+
+                    var span = document.createElement('span');
+                    
+                    if (data.pucc[i].status == "a"){
+                        span.className = 'badge bg-success rounded-pill px-3';
+                        span.innerHTML = "Active";
+                    }
+                    else if (data.pucc[i].status == "e"){
+                        span.className = 'badge bg-danger rounded-pill px-3';
+                        span.innerHTML = "Expired";
+                    }
+
+                    div.appendChild(div1);
+                    div.appendChild(div2);
+                    div.appendChild(div3);
+
+                    var li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center py-3';
+                    li.appendChild(div);
+                    li.appendChild(span);
+
+                    document.getElementById('pucc_status').appendChild(li);
+                }
+            });
+    </script>
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
