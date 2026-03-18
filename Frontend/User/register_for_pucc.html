@@ -153,11 +153,6 @@
 
     </div>
 
-
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
 
         const slots = {
@@ -217,22 +212,37 @@
         }
 
         var selectdate = document.getElementById('dateSelect');
-        selectdate.addEventListener('mouseover', async () => {
+        // console.log(selectdate.children.length);
+        // selectdate.remove('option');
+        // console.log(selectdate.children.length);
+
+        
+        selectdate.addEventListener('click', async () => {
+            while (selectdate.children.length != 0){
+                selectdate.remove('option');
+            }
+            
             var selected = document.getElementById('vendor_select').value;
             var vendor_no = parseInt(selected.split(' , ')[0]);
 
             var data = await get_datetime(vendor_no);
+            console.log(data);
 
             var date = new Date();
 
-            console.log(date.getDay());
             var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            
+            let i = data.rows.length - 1;
 
             for (let i = 0; i < data.rows.length; i++){
-                if (data.rows[i].Day == days[date.getDay()]){
-                    var option = document.createElement('Option');
-                    option.innerHTML = date.toISOString().split('T')[0];
-                    document.getElementById('dateSelect').appendChild(option);
+                date = new Date()
+                for (let j = 0; j < 7; j++){
+                    if (data.rows[i].Day == days[date.getDay()]){
+                        var option = document.createElement('option');
+                        option.innerHTML = date.toISOString().split('T')[0];
+                        document.getElementById('dateSelect').appendChild(option);
+                    }
+                    date.setDate(date.getDate() + 1 % 7)
                 }
             }
         });
