@@ -79,31 +79,31 @@
 
                     <div class="col-sm-6">
                         <label class="form-label">Last name</label>
-                        <input type="text" class="form-control">
+                        <input type="text" class="form-control" required>
                     </div>
 
 
                     <div class="col-12">
                         <label class="form-label">Adhaar Number *</label>
-                        <input type="text" class="form-control">
+                        <input type="text" class="form-control" required>
                     </div>
 
 
                     <div class="col-12">
                         <label class="form-label">Contact *</label>
-                        <input type="text" class="form-control">
+                        <input type="text" class="form-control" required>
                     </div>
 
 
                     <div class="col-12">
                         <label class="form-label">Vehicle No *</label>
-                        <input type="text" class="form-control">
+                        <input type="text" class="form-control" required>
                     </div>
 
 
                     <div class="col-12">
                         <label class="form-label">Address *</label>
-                        <input type="text" class="form-control">
+                        <input type="text" class="form-control" required>
                     </div>
 
 
@@ -119,15 +119,9 @@
 
                 <h4 class="mb-3">Preferred center *</h4>
 
-                <select class="form-select">
-
+                <select id="vendor_select" class="form-select">
                     <option selected>Select Center</option>
-                    <option>Center 1</option>
-                    <option>Center 2</option>
-                    <option>Center 3</option>
-
                 </select>
-
 
                 <br class="my-4">
 
@@ -138,9 +132,6 @@
                     <div class="col-md-6">
                         <select class="form-select" id="dateSelect">
                             <option selected disabled>Select Date</option>
-                            <option value="2026-03-10">10 Mar 2026</option>
-                            <option value="2026-03-11">11 Mar 2026</option>
-                            <option value="2026-03-12">12 Mar 2026</option>
                         </select>
                     </div>
 
@@ -189,6 +180,62 @@
             ]
 
         };
+
+        var main = document.getElementById('vendor_select');
+        main.addEventListener("mouseover", function() {
+            fetch("http://localhost:3000/registered_vendors")
+            .then(response => response.json())
+            .then(data => {
+                for (let i = 0; i < data.length; i++){
+                    var option = document.createElement('Option');
+                    option.innerHTML = data[i].Vendor_No + " , " + data[i].Name + " , " + data[i].Location;
+                    
+                    document.getElementById('vendor_select').appendChild(option);
+                }
+            });
+        });
+
+        async function get_datetime(vendor_no){
+            var returnResponse;
+            try{
+                returnResponse = await fetch('http://localhost:3000/vendor_time', {
+                        method: "POST",
+    
+                        body: JSON.stringify({
+                            number: vendor_no
+                        }),
+    
+                        headers: { 'Content-type': 'application/json; charset=UTF-8' }
+    
+                    });
+            }
+            catch (error){
+                console.log("Error detected : " + error);
+            }
+
+            return returnResponse.json();
+        }
+
+        var selectdate = document.getElementById('dateSelect');
+        selectdate.addEventListener('mouseover', async () => {
+            var selected = document.getElementById('vendor_select').value;
+            var vendor_no = parseInt(selected.split(' , ')[0]);
+
+            var data = await get_datetime(vendor_no);
+
+            var date = new Date();
+
+            console.log(date.getDay());
+            var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+            for (let i = 0; i < data.rows.length; i++){
+                if (data.rows[i].Day == days[date.getDay()]){
+                    var option = document.createElement('Option');
+                    option.innerHTML = date.toISOString().split('T')[0];
+                    document.getElementById('dateSelect').appendChild(option);
+                }
+            }
+        });
 
     </script>
 </body>

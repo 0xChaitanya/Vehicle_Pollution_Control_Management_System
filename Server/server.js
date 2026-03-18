@@ -68,7 +68,6 @@ app.get('/registered_vendors', async (req, res) => {
 	await client.connect();
 
 	var result = await client.query('SELECT "Vendor_No", "GST_No", "Name", "Location" FROM "Vendor";');
-	// console.log(result.rows);
 	await client.end();
 
 	res.send(result.rows);
@@ -156,6 +155,15 @@ app.get('/load_user', async (req, res) => {
 
 
 	res.send(JSON.stringify(profile));
+});
+
+app.post('/vendor_time', async(req, res) => {
+	var client = new pg.Client(conString);
+	await client.connect();
+
+	var query = await client.query(`SELECT "Start_Time", "End_Time", "Slot_Duration", "Day" FROM "Vendor_Schedule" WHERE "Vendor_No" = ${req.body.number}`);
+
+	return res.send(JSON.stringify(query));
 });
 
 app.get('/load_vendor', async (req, res) => {
