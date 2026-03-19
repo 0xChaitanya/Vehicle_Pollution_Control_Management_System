@@ -22,7 +22,8 @@
                 <div class="row">
                     <div class="col-4">
                         <a class="navbar-brand" href="#">
-                            <img src="/Frontend/Images/image.png" alt="" width="145" class="d-inline-block align-text-top">
+                            <img src="/Frontend/Images/image.png" alt="" width="145"
+                                class="d-inline-block align-text-top">
                         </a>
                     </div>
                     <div class="col-8 my-4">
@@ -79,7 +80,7 @@
 
                     <div class="col-sm-6">
                         <label class="form-label">Last name</label>
-                        <input type="text" class="form-control" required>
+                        <input type="text" class="form-control">
                     </div>
 
 
@@ -145,7 +146,7 @@
 
                 <hr class="my-4">
 
-                <button class="w-100 btn btn-primary btn-lg">Apply</button>
+                <button id="btnok" class="w-100 btn btn-primary btn-lg">Apply</button>
 
             </form>
 
@@ -177,34 +178,39 @@
         };
 
         var main = document.getElementById('vendor_select');
-        main.addEventListener("mouseover", function() {
+        let loaded = false;
+
+        main.addEventListener("mouseover", function () {
+            if (loaded) return;
+            loaded = true;
+
             fetch("http://localhost:3000/registered_vendors")
-            .then(response => response.json())
-            .then(data => {
-                for (let i = 0; i < data.length; i++){
-                    var option = document.createElement('Option');
-                    option.innerHTML = data[i].Vendor_No + " , " + data[i].Name + " , " + data[i].Location;
-                    
-                    document.getElementById('vendor_select').appendChild(option);
-                }
-            });
+                .then(response => response.json())
+                .then(data => {
+                    for (let i = 0; i < data.length; i++) {
+                        var option = document.createElement('option');
+                        option.innerHTML = data[i].Vendor_No + " , " + data[i].Name + " , " + data[i].Location;
+
+                        document.getElementById('vendor_select').appendChild(option);
+                    }
+                });
         });
 
-        async function get_datetime(vendor_no){
+        async function get_datetime(vendor_no) {
             var returnResponse;
-            try{
+            try {
                 returnResponse = await fetch('http://localhost:3000/vendor_time', {
-                        method: "POST",
-    
-                        body: JSON.stringify({
-                            number: vendor_no
-                        }),
-    
-                        headers: { 'Content-type': 'application/json; charset=UTF-8' }
-    
-                    });
+                    method: "POST",
+
+                    body: JSON.stringify({
+                        number: vendor_no
+                    }),
+
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
+
+                });
             }
-            catch (error){
+            catch (error) {
                 console.log("Error detected : " + error);
             }
 
@@ -212,39 +218,135 @@
         }
 
         var selectdate = document.getElementById('dateSelect');
-        // console.log(selectdate.children.length);
-        // selectdate.remove('option');
-        // console.log(selectdate.children.length);
+        var selectslot = document.getElementById('slotSelect');
 
-        
+        let dateLoaded = false;
+
+        document.getElementById('vendor_select').addEventListener('change', () => {
+            dateLoaded = false;
+            selectdate.innerHTML = "";
+        });
+
         selectdate.addEventListener('click', async () => {
-            while (selectdate.children.length != 0){
-                selectdate.remove('option');
-            }
-            
+
+            if (dateLoaded) return;
+            dateLoaded = true;
+
+            selectdate.innerHTML = "";
+
             var selected = document.getElementById('vendor_select').value;
             var vendor_no = parseInt(selected.split(' , ')[0]);
 
             var data = await get_datetime(vendor_no);
-            console.log(data);
-
-            var date = new Date();
 
             var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-            
-            let i = data.rows.length - 1;
 
-            for (let i = 0; i < data.rows.length; i++){
-                date = new Date()
-                for (let j = 0; j < 7; j++){
-                    if (data.rows[i].Day == days[date.getDay()]){
+            for (let i = 0; i < data.rows.length; i++) {
+
+                let tempDate = new Date();
+
+                for (let j = 0; j < 7; j++) {
+
+                    if (data.rows[i].Day === days[tempDate.getDay()]) {
                         var option = document.createElement('option');
-                        option.innerHTML = date.toISOString().split('T')[0];
-                        document.getElementById('dateSelect').appendChild(option);
+                        option.innerHTML = tempDate.toISOString().split('T')[0];
+                        selectdate.appendChild(option);
                     }
-                    date.setDate(date.getDate() + 1 % 7)
+
+                    tempDate.setDate(tempDate.getDate() + 1);
                 }
             }
+        });
+
+        document.getElementById('vendor_select').addEventListener('change', async () => {
+
+            const slotSelect = document.getElementById('slotSelect');
+            slotSelect.innerHTML = "";
+
+            const selected = document.getElementById('vendor_select').value;
+            const vendor_no = parseInt(selected.split(' , ')[0]);
+
+            const data = await get_datetime(vendor_no);
+
+            let start_time = data.rows[0].Start_Time;
+            const end_time = data.rows[0].End_Time;
+            const slot = data.rows[0].Slot_Duration;
+
+            while (timeToMinutes(start_time) <= timeToMinutes(end_time)) {
+                const option = document.createElement('option');
+                option.innerHTML = start_time;
+
+                slotSelect.appendChild(option);
+                start_time = stringTimeAddition(start_time, slot);
+            }
+        });
+
+        function timeToMinutes(t) {
+            const [h, m, s] = t.split(':').map(Number);
+            return h * 60 + m + Math.floor(s / 60);
+        }
+
+        function stringTimeAddition(s1, s2) {
+            // given strings in format HH:MM:SS, this function adds two such strings
+
+            seconds1 = parseInt(s1.split(':')[2]);
+            seconds2 = parseInt(s2.split(':')[2]);
+            carry1 = Math.floor((seconds1 + seconds2) / 60);
+            remainder3 = seconds1 + seconds2 - carry1 * 60;
+
+            minutes1 = parseInt(s1.split(':')[1]);
+            minutes2 = parseInt(s2.split(':')[1]);
+            carry2 = Math.floor((minutes1 + minutes2 + carry1) / 60);
+            remainder2 = minutes1 + minutes2 + carry1 - carry2 * 60;
+
+            hours1 = parseInt(s1.split(':')[0]);
+            hours2 = parseInt(s2.split(':')[0]);
+
+            return String(hours1 + hours2 + carry2) + ":" + String(remainder2) + ":" + String(remainder3);
+        };
+
+        async function fetchAll() {
+
+            const form = document.querySelector('form');
+
+            const inputs = form.querySelectorAll('input');
+
+            const data = {
+                first_name: inputs[0].value,
+                last_name: inputs[1].value,
+                adhaar: inputs[2].value,
+                contact: inputs[3].value,
+                vehicle_no: inputs[4].value,
+                address: inputs[5].value,
+                zip: inputs[6].value,
+
+                vendor: document.getElementById('vendor_select').value,
+                date: document.getElementById('dateSelect').value,
+                slot: document.getElementById('slotSelect').value
+            };
+
+            return data;
+        }
+
+        document.getElementById('btnok').addEventListener('click', async () => {
+            var returnResponse;
+            try {
+                returnResponse = await fetch('http://localhost:3000/new_pucc', {
+                    method: "POST",
+
+                    body: JSON.stringify(
+                        await fetchAll()
+                    ),
+
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
+
+                });
+            }
+            catch (error) {
+                console.log("Error detected : " + error);
+            }
+
+            return returnResponse.json();
         });
 
     </script>

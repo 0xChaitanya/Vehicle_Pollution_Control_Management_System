@@ -13,6 +13,34 @@ app.use(cors());
 var conString = 'postgres://postgres:my_postgres@localhost:5432/PUCCDB';
 var conStringAuthDB = 'postgres://postgres:my_postgres@localhost:5432/AUTHDB';
 
+function generatePUCCNumber() {
+	const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	function randLetter() {
+		return letters[Math.floor(Math.random() * letters.length)];
+	}
+
+	function randDigit() {
+		return Math.floor(Math.random() * 10);
+	}
+
+	return "DL"
+		+ randDigit()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randLetter()
+		+ randDigit();
+}
+
+function generatelocationId() {
+	return Math.floor(100000 + Math.random() * 900000);
+}
+
 app.get('/pucc_issued', async (req, res) => {
 	// console.log(await hashing.compare('my_password', '$2a$12$P3o.0OPcJtgzeXYYrxI/KuSXcRONjbyp.6yv2/IawJT92I6imXpsO'))
 
@@ -141,14 +169,14 @@ app.get('/load_user', async (req, res) => {
 	var date = new Date().toISOString();
 
 	for (let i = 0; i < pucc_details.rows.length; i++) {
-		profile.pucc.push({ number: pucc_details.rows[i].PUCC_No, issued_on: pucc_details.rows[i].Issued_On, validity: pucc_details.rows[i].Valid_Till, status: "e"});
+		profile.pucc.push({ number: pucc_details.rows[i].PUCC_No, issued_on: pucc_details.rows[i].Issued_On, validity: pucc_details.rows[i].Valid_Till, status: "e" });
 
 		if (new Date(pucc_details.rows[0].Valid_Till) >= new Date(date.split('T')[0])) {
 			profile.pucc[i].status = "a";
 		} else if (new Date(pucc_details.rows[0].Valid_Till) < new Date(date.split('T')[0])) {
 			profile.pucc[i].status = "e";
 		}
-		else{
+		else {
 			profile.pucc[i].status = "u";
 		}
 	}
@@ -157,7 +185,7 @@ app.get('/load_user', async (req, res) => {
 	res.send(JSON.stringify(profile));
 });
 
-app.post('/vendor_time', async(req, res) => {
+app.post('/vendor_time', async (req, res) => {
 	var client = new pg.Client(conString);
 	await client.connect();
 
@@ -187,30 +215,62 @@ app.get('/load_vendor', async (req, res) => {
 
 	var details = await client.query(`SELECT * FROM "Vendor" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
 
-	var profile = { number: vnumber.rows[0].Vendor_No, name: details.rows[0].Name, gstin: details.rows[0].GST_No, type: [], location: details.rows[0].Location, total_pucc:details.rows[0].Total_PUCC_Issued, appointments: [], total_revenue : 0};
+	var profile = { number: vnumber.rows[0].Vendor_No, name: details.rows[0].Name, gstin: details.rows[0].GST_No, type: [], location: details.rows[0].Location, total_pucc: details.rows[0].Total_PUCC_Issued, appointments: [], total_revenue: 0 };
 
 	var category = await client.query(`SELECT * FROM "Vendor_Category" WHERE "Vendor_No" = '${vnumber.rows[0].Vendor_No}'`);
 
-	for (let i = 0; i < category.rows.length; i++){
+	for (let i = 0; i < category.rows.length; i++) {
 		profile.type.push(category.rows[i].Type);
 	}
 
 	var appointments_today = await client.query(`SELECT "Vehicle_No", "Fuel_Type", "Time_Slot"  FROM "Testing" NATURAL JOIN "Vehicle" NATURAL JOIN "Location_Time" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
 
 	var date = new Date().toISOString();
-	for (let i = 0; i < appointments_today.rows.length; i++){
-		if (JSON.stringify(appointments_today.rows[i].Time_Slot).split('T')[0] < `"${date.split('T')[0]}`){
-			profile.appointments.push({vehicle_no: appointments_today.rows[i].Vehicle_No, fuel: appointments_today.rows[i].Fuel_Type, time: appointments_today.rows[i].Time_Slot});
+	for (let i = 0; i < appointments_today.rows.length; i++) {
+		if (JSON.stringify(appointments_today.rows[i].Time_Slot).split('T')[0] < `"${date.split('T')[0]}`) {
+			profile.appointments.push({ vehicle_no: appointments_today.rows[i].Vehicle_No, fuel: appointments_today.rows[i].Fuel_Type, time: appointments_today.rows[i].Time_Slot });
 		}
 	}
 	var revenue = await client.query(`SELECT "Price" FROM "PUCC_seller" NATURAL JOIN "Max_PUCC_Price" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No};`);
 
-	for (let i = 0; i < revenue.rows.length; i++){
+	for (let i = 0; i < revenue.rows.length; i++) {
 		profile.total_revenue += parseInt(revenue.rows[i].Price);
 	}
 
 	res.send(JSON.stringify(profile));
 });
+
+function toPostgresTimestamp(str) {
+    return str;
+}
+
+app.post('/new_pucc', async (req, res) => {
+	var client = new pg.Client(conString);
+	await client.connect();
+
+	var locationtimeid = generatelocationId();
+	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+	while (id.rows[0].count != 0){ // keeps generating until hits a new one
+		locationtimeid = generatelocationId();
+		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+	}
+	console.log(req.body);
+
+	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
+	
+	var query = await client.query(`INSERT INTO "Testing" VALUES ('${req.body.adhaar}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid})`);
+
+	var pucc_no = generatePUCCNumber();
+	id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
+	while (id.rows[0].count != 0){
+		pucc_no = generatePUCCNumber();
+		id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
+	}
+
+	var query = await client.query(`INSERT INTO "Registration" VALUES ('${req.body.adhaar}', '${req.body.vehicle_no}', '${pucc_no}')`);
+	
+});
+
 
 app.listen(PORT, () => {
 	console.log(`Server is running on http://localhost:${PORT}`);
