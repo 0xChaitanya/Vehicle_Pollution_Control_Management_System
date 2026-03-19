@@ -157,7 +157,7 @@ app.get('/load_user', async (req, res) => {
 	var details = await client.query(`SELECT * FROM "Owner" WHERE "Adhaar_No" = '${adhaar.rows[0].Adhaar_No}'`);
 	// console.log(details);
 
-	var profile = { name: details.rows[0].Name, adhaar: details.rows[0].Adhaar_No, contact: details.rows[0].Contact_No, home_addr: details.rows[0].Home_Address, vehicle: [], pucc: [] };
+	var profile = { name: details.rows[0].Name, adhaar: details.rows[0].Adhaar_No, contact: details.rows[0].Contact_No, home_addr: details.rows[0].Home_Address, vehicle: [], pucc: [], pending_pucc:[]};
 
 	for (let i = 0; i < details.rows.length; i++) {
 		var fueltype = await client.query(`SELECT "Fuel_Type" FROM "Vehicle" WHERE "Vehicle_No" = '${details.rows[i].Vehicle_No}'`)
@@ -165,6 +165,7 @@ app.get('/load_user', async (req, res) => {
 	}
 
 	var pucc_details = await client.query(`SELECT "PUCC_No", "Issued_On", "Valid_Till" FROM "PUCC" WHERE "Adhaar_No" = '${adhaar.rows[0].Adhaar_No}'`);
+	var pending_approval = await client.query(`SELECT "PUCC_No" FROM "Registration" WHERE "Adhaar_No" = '${adhaar.rows[0].Adhaar_No}' AND "PUCC_No" NOT IN (SELECT "PUCC_No" from "PUCC")`);
 
 	var date = new Date().toISOString();
 
@@ -181,6 +182,9 @@ app.get('/load_user', async (req, res) => {
 		}
 	}
 
+	for (let i = 0; i < pending_approval.rows.length; i++){
+		profile.pending_pucc.push({pucc_no : pending_approval.rows[i].PUCC_No});
+	}
 
 	res.send(JSON.stringify(profile));
 });
@@ -275,8 +279,10 @@ app.post('/renew_pucc', async (req, res) => {
 	var client = new pg.Client(conString);
 	await client.connect();
 
+	console.log(req.body);
 	var id = await client.query(`SELECT * FROM "Registration" WHERE "PUCC_No" = '${req.body.pucc_no}'`)
 	
+	console.log(id);
 	
 	var locationtimeid = generatelocationId();
 	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
@@ -284,11 +290,10 @@ app.post('/renew_pucc', async (req, res) => {
 		locationtimeid = generatelocationId();
 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
 	}
-	console.log(req.body);
 
 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
 	
-	var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(id.rows[0].Vendor_No.split(' , ')[0])}, ${locationtimeid})`);
+	var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(id.rows[0].Vendor_No)}, ${locationtimeid})`);
 });
 
 
