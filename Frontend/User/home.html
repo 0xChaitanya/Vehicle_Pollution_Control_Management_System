@@ -170,6 +170,27 @@
                 document.getElementById('number_of_vehicle').innerHTML = data.vehicle.length;
 
                 //---------------------------pucc card---------------------------------
+                for (let i = 0; i < data.pending_pucc.length; i++){
+                    var div = document.createElement('div');
+                
+                    var div1 = document.createElement('div');
+                    div1.className = 'fw-bold text-dark';
+                    div1.innerHTML = data.pending_pucc[i].pucc_no;
+                
+                    var span = document.createElement('span');
+                    
+                    span.className = 'badge bg-info rounded-pill px-3';
+                    span.innerHTML = "Pending Approval";
+                
+                    div.appendChild(div1);
+                
+                    var li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center py-3';
+                    li.appendChild(div);
+                    li.appendChild(span);
+                
+                    document.getElementById('pucc_status').appendChild(li);
+                }
 
                 for (let i = 0; i < data.pucc.length; i++){
                     var div = document.createElement('div');
@@ -185,7 +206,7 @@
                     var div3 = document.createElement('div');
                     div3.className = 'text-secondary small';
                     div3.innerHTML = "Validity : " + data.pucc[i].validity.split('T')[0];
-
+                    
                     var span = document.createElement('span');
                     
                     if (data.pucc[i].status == "a"){
@@ -196,20 +217,21 @@
                         span.className = 'badge bg-danger rounded-pill px-3';
                         span.innerHTML = "Expired";
                     }
-
+                    
                     div.appendChild(div1);
                     div.appendChild(div2);
                     div.appendChild(div3);
-
+                    
                     var li = document.createElement('li');
                     li.className = 'list-group-item d-flex justify-content-between align-items-center py-3';
                     li.appendChild(div);
                     li.appendChild(span);
-
+                    
                     document.getElementById('pucc_status').appendChild(li);
                 }
+                
             });
-    </script>
+            </script>
 
 
     <!-- Bootstrap JS -->

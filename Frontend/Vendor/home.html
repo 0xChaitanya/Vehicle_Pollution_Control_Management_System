@@ -116,7 +116,7 @@
                     </div>
 
                     <ul id="appointments" class="list-group list-group-flush">
-<!-- 
+                        <!-- 
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
                                 <div class="d-flex align-items-center gap-2 mb-1">
@@ -171,50 +171,50 @@
                 document.getElementById('total_pucc_issued').innerHTML = data.total_pucc;
 
                 let count = 0;
-                for (let j = 0; j < data.appointments.length; j++){
+                for (let j = 0; j < data.appointments.length; j++) {
                     count++;
                     let div = document.createElement('div');
-    
+
                     let div0 = document.createElement('div');
                     div0.className = 'd-flex align-items-center gap-2 mb-1';
-    
+
                     let div1 = document.createElement('div');
                     div1.className = 'fw-bold text-dark fs-5';
                     div1.innerHTML = data.appointments[j].vehicle_no;
-    
-                    let span1 = document.createElement('span');
-                    span1.className = 'badge border text-bg-primary text-dark rounded-pill style="font-size: 0.7rem"';
-                    span1.innerHTML = data.appointments[j].fuel;
-    
-                    let i = document.createElement('i');
-                    i.className = 'far fa-calendar-alt me-1';
-                    i.innerHTML = data.appointments[j].time.split('T')[0];
-    
-                    let div2 = document.createElement('div');
-                    div2.className = 'text-secondary small';
 
-                    let span = document.createElement('span');
-                    span.className = 'badge bg-light border text-dark rounded-pill px-3 py-2 shadow-sm';
-                    span.innerHTML = data.appointments[j].time.split('T')[1].split('.000Z')[0];
+                    // let span1 = document.createElement('span');
+                    // span1.className = 'badge border text-bg-primary text-dark rounded-pill style="font-size: 0.7rem"';
+                    // span1.innerHTML = data.appointments[j].fuel;
 
-                    let i_ = document.createElement('i');
-                    i_.className = 'far fa-clock text-warning me-1';
-    
+                    // let i = document.createElement('i');
+                    // i.className = 'far fa-calendar-alt me-1';
+                    // i.innerHTML = data.appointments[j].time.split('T')[0];
+
+                    // let div2 = document.createElement('div');
+                    // div2.className = 'text-secondary small';
+
+                    // let span = document.createElement('span');
+                    // span.className = 'badge bg-light border text-dark rounded-pill px-3 py-2 shadow-sm';
+                    // span.innerHTML = data.appointments[j].time.split('T')[1].split('.000Z')[0];
+
+                    // let i_ = document.createElement('i');
+                    // i_.className = 'far fa-clock text-warning me-1';
+
                     div0.appendChild(div1);
-                    div0.appendChild(span1);
+                    // div0.appendChild(span1);
                     div.appendChild(div0);
-    
-                    span.appendChild(i_);
-                    
-                    div.appendChild(div2);
-                    div.appendChild(span);
-                    div2.appendChild(i);
-    
+
+                    // span.appendChild(i_);
+
+                    // div.appendChild(div2);
+                    // div.appendChild(span);
+                    // div2.appendChild(i);
+
                     let li = document.createElement('li');
                     li.className = 'list-group-item d-flex justify-content-between align-items-center py-3';
                     li.appendChild(div);
-                    li.appendChild(div2);
-    
+                    // li.appendChild(div2);
+
                     document.getElementById('appointments').appendChild(li);
                 }
 

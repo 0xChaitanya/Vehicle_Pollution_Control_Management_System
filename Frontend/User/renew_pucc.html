@@ -22,7 +22,8 @@
                 <div class="row">
                     <div class="col-4">
                         <a class="navbar-brand" href="#">
-                            <img src="/Frontend/Images/image.png" alt="" width="145" class="d-inline-block align-text-top">
+                            <img src="/Frontend/Images/image.png" alt="" width="145"
+                                class="d-inline-block align-text-top">
                         </a>
                     </div>
                     <div class="col-8 my-4">
@@ -71,7 +72,7 @@
 
                     <div class="col-12">
                         <label class="form-label">Registration Number (PUCC Number) *</label>
-                        <input type="text" class="form-control">
+                        <input id="pucc_no" type="text" class="form-control">
                     </div>
 
                 </div>
@@ -81,12 +82,9 @@
 
                 <h4 class="mb-3">Preferred center *</h4>
 
-                <select class="form-select">
+                <select id="vendor_select" class="form-select">
 
                     <option selected>Select Center</option>
-                    <option>Center 1</option>
-                    <option>Center 2</option>
-                    <option>Center 3</option>
 
                 </select>
 
@@ -100,9 +98,6 @@
                     <div class="col-md-6">
                         <select class="form-select" id="dateSelect">
                             <option selected disabled>Select Date</option>
-                            <option value="2026-03-10">10 Mar 2026</option>
-                            <option value="2026-03-11">11 Mar 2026</option>
-                            <option value="2026-03-12">12 Mar 2026</option>
                         </select>
                     </div>
 
@@ -116,7 +111,7 @@
 
                 <hr class="my-4">
 
-                <button class="w-100 btn btn-primary btn-lg">Apply</button>
+                <button id=renewbtn class="w-100 btn btn-primary btn-lg">Submit</button>
 
             </form>
 
@@ -129,49 +124,172 @@
 
     <script>
 
-        const slots = {
+        var main = document.getElementById('vendor_select');
+        let loaded = false;
 
-            "2026-03-10": [
-                "09:00 - 09:30",
-                "10:00 - 10:30",
-                "11:00 - 11:30"
-            ],
+        main.addEventListener("mouseover", function () {
+            if (loaded) return;
+            loaded = true;
 
-            "2026-03-11": [
-                "12:00 - 12:30",
-                "13:00 - 13:30",
-                "14:00 - 14:30"
-            ],
+            fetch("http://localhost:3000/registered_vendors")
+                .then(response => response.json())
+                .then(data => {
+                    for (let i = 0; i < data.length; i++) {
+                        var option = document.createElement('option');
+                        option.innerHTML = data[i].Vendor_No + " , " + data[i].Name + " , " + data[i].Location;
 
-            "2026-03-12": [
-                "15:00 - 15:30",
-                "16:00 - 16:30"
-            ]
+                        document.getElementById('vendor_select').appendChild(option);
+                    }
+                });
+        });
 
-        };
+        async function get_datetime(vendor_no) {
+            var returnResponse;
+            try {
+                returnResponse = await fetch('http://localhost:3000/vendor_time', {
+                    method: "POST",
 
+                    body: JSON.stringify({
+                        number: vendor_no
+                    }),
 
-        document.getElementById("dateSelect").addEventListener("change", function () {
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
 
-            let date = this.value;
-            let slotSelect = document.getElementById("slotSelect");
+                });
+            }
+            catch (error) {
+                console.log("Error detected : " + error);
+            }
 
-            slotSelect.innerHTML = '<option selected disabled>Select Slot</option>';
+            return returnResponse.json();
+        }
 
-            slots[date].forEach(function (slot) {
+        var selectdate = document.getElementById('dateSelect');
+        var selectslot = document.getElementById('slotSelect');
 
-                let option = document.createElement("option");
-                option.text = slot;
-                option.value = slot;
+        let dateLoaded = false;
+
+        document.getElementById('vendor_select').addEventListener('change', () => {
+            dateLoaded = false;
+            selectdate.innerHTML = "";
+        });
+
+        selectdate.addEventListener('click', async () => {
+
+            if (dateLoaded) return;
+            dateLoaded = true;
+
+            selectdate.innerHTML = "";
+
+            var selected = document.getElementById('vendor_select').value;
+            var vendor_no = parseInt(selected.split(' , ')[0]);
+
+            var data = await get_datetime(vendor_no);
+
+            var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+            for (let i = 0; i < data.rows.length; i++) {
+
+                let tempDate = new Date();
+
+                for (let j = 0; j < 7; j++) {
+
+                    if (data.rows[i].Day === days[tempDate.getDay()]) {
+                        var option = document.createElement('option');
+                        option.innerHTML = tempDate.toISOString().split('T')[0];
+                        selectdate.appendChild(option);
+                    }
+
+                    tempDate.setDate(tempDate.getDate() + 1);
+                }
+            }
+        });
+
+        document.getElementById('vendor_select').addEventListener('change', async () => {
+
+            const slotSelect = document.getElementById('slotSelect');
+            slotSelect.innerHTML = "";
+
+            const selected = document.getElementById('vendor_select').value;
+            const vendor_no = parseInt(selected.split(' , ')[0]);
+
+            const data = await get_datetime(vendor_no);
+
+            let start_time = data.rows[0].Start_Time;
+            const end_time = data.rows[0].End_Time;
+            const slot = data.rows[0].Slot_Duration;
+
+            while (timeToMinutes(start_time) <= timeToMinutes(end_time)) {
+                const option = document.createElement('option');
+                option.innerHTML = start_time;
 
                 slotSelect.appendChild(option);
+                start_time = stringTimeAddition(start_time, slot);
+            }
+        });
 
-            });
+        function timeToMinutes(t) {
+            const [h, m, s] = t.split(':').map(Number);
+            return h * 60 + m + Math.floor(s / 60);
+        }
 
+        function stringTimeAddition(s1, s2) {
+            // given strings in format HH:MM:SS, this function adds two such strings
+
+            seconds1 = parseInt(s1.split(':')[2]);
+            seconds2 = parseInt(s2.split(':')[2]);
+            carry1 = Math.floor((seconds1 + seconds2) / 60);
+            remainder3 = seconds1 + seconds2 - carry1 * 60;
+
+            minutes1 = parseInt(s1.split(':')[1]);
+            minutes2 = parseInt(s2.split(':')[1]);
+            carry2 = Math.floor((minutes1 + minutes2 + carry1) / 60);
+            remainder2 = minutes1 + minutes2 + carry1 - carry2 * 60;
+
+            hours1 = parseInt(s1.split(':')[0]);
+            hours2 = parseInt(s2.split(':')[0]);
+
+            return String(hours1 + hours2 + carry2) + ":" + String(remainder2) + ":" + String(remainder3);
+        };
+
+        async function fetchAll() {
+
+            const form = document.querySelector('form');
+
+            const inputs = form.querySelectorAll('input');
+
+            const data = {
+                pucc_no: document.getElementById('pucc_no').value,
+                vendor: document.getElementById('vendor_select').value,
+                date: document.getElementById('dateSelect').value,
+                slot: document.getElementById('slotSelect').value
+            };
+
+            console.log(data);
+            return data;
+        }
+
+        document.getElementById('renewbtn').addEventListener('click', async () => {
+            var returnResponse;
+            try {
+                returnResponse = await fetch('http://localhost:3000/renew_pucc', {
+                    method: "POST",
+
+                    body: JSON.stringify(
+                        await fetchAll()
+                    ),
+
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
+
+                });
+            }
+            catch (error) {
+                console.log("Error detected : " + error);
+            }
+
+            return returnResponse.json();
         });
 
     </script>
-
 </body>
-
 </html>

@@ -227,14 +227,16 @@ app.get('/load_vendor', async (req, res) => {
 		profile.type.push(category.rows[i].Type);
 	}
 
-	var appointments_today = await client.query(`SELECT "Vehicle_No", "Fuel_Type", "Time_Slot"  FROM "Testing" NATURAL JOIN "Vehicle" NATURAL JOIN "Location_Time" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
+	var appointments_today = await client.query(`SELECT "Vehicle_No" FROM "Testing" NATURAL JOIN "Registration" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No}`);
 
 	var date = new Date().toISOString();
 	for (let i = 0; i < appointments_today.rows.length; i++) {
-		if (JSON.stringify(appointments_today.rows[i].Time_Slot).split('T')[0] < `"${date.split('T')[0]}`) {
-			profile.appointments.push({ vehicle_no: appointments_today.rows[i].Vehicle_No, fuel: appointments_today.rows[i].Fuel_Type, time: appointments_today.rows[i].Time_Slot });
-		}
+		// if (JSON.stringify(appointments_today.rows[i].Time_Slot).split('T')[0] < `"${date.split('T')[0]}`) {
+			profile.appointments.push({ vehicle_no: appointments_today.rows[i].Vehicle_No});
+			// profile.appointments.push({ vehicle_no: appointments_today.rows[i].Vehicle_No, fuel: appointments_today.rows[i].Fuel_Type, time: appointments_today.rows[i].Time_Slot });
+		// }
 	}
+
 	var revenue = await client.query(`SELECT "Price" FROM "PUCC_seller" NATURAL JOIN "Max_PUCC_Price" WHERE "Vendor_No" = ${vnumber.rows[0].Vendor_No};`);
 
 	for (let i = 0; i < revenue.rows.length; i++) {
@@ -278,7 +280,7 @@ app.post('/new_pucc', async (req, res) => {
 app.post('/renew_pucc', async (req, res) => {
 	var client = new pg.Client(conString);
 	await client.connect();
-
+	
 	console.log(req.body);
 	var id = await client.query(`SELECT * FROM "Registration" WHERE "PUCC_No" = '${req.body.pucc_no}'`)
 	
@@ -290,12 +292,11 @@ app.post('/renew_pucc', async (req, res) => {
 		locationtimeid = generatelocationId();
 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
 	}
-
+	
 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
 	
 	var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(id.rows[0].Vendor_No)}, ${locationtimeid})`);
 });
-
 
 app.listen(PORT, () => {
 	console.log(`Server is running on http://localhost:${PORT}`);
