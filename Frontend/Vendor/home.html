@@ -181,6 +181,10 @@
                     let div1 = document.createElement('div');
                     div1.className = 'fw-bold text-dark fs-5';
                     div1.innerHTML = data.appointments[j].vehicle_no;
+                    
+                    let div2 = document.createElement('div');
+                    div2.className = 'btn btn-outline-warning me-md-2';
+                    div1.innerHTML = 'Approve';
 
                     // let span1 = document.createElement('span');
                     // span1.className = 'badge border text-bg-primary text-dark rounded-pill style="font-size: 0.7rem"';
@@ -201,6 +205,7 @@
                     // i_.className = 'far fa-clock text-warning me-1';
 
                     div0.appendChild(div1);
+                    div0.appendChild(div2);
                     // div0.appendChild(span1);
                     div.appendChild(div0);
 

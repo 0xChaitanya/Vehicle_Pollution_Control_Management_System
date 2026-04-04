@@ -260,7 +260,7 @@ app.post('/new_pucc', async (req, res) => {
 		locationtimeid = generatelocationId();
 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
 	}
-	console.log(req.body);
+	// console.log(req.body);
 
 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
 	
@@ -282,20 +282,23 @@ app.post('/renew_pucc', async (req, res) => {
 	await client.connect();
 	
 	console.log(req.body);
-	var id = await client.query(`SELECT * FROM "Registration" WHERE "PUCC_No" = '${req.body.pucc_no}'`)
 	
-	console.log(id);
+	// console.log(id);
 	
 	var locationtimeid = generatelocationId();
+	// console.log(locationtimeid);
 	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
 	while (id.rows[0].count != 0){ // keeps generating until hits a new one
 		locationtimeid = generatelocationId();
 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
 	}
 	
+	var id = await client.query(`SELECT * FROM "PUCC" WHERE "PUCC_No" = '${req.body.pucc_no}'`);
+	console.log(id.rows);
+
 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
 	
-	var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(id.rows[0].Vendor_No)}, ${locationtimeid})`);
+	// var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid}, ${})`); //PROBLEM HERE
 });
 
 app.listen(PORT, () => {
