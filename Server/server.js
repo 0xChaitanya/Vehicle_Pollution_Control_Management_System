@@ -277,28 +277,111 @@ app.post('/new_pucc', async (req, res) => {
 	
 });
 
-app.post('/renew_pucc', async (req, res) => {
-	var client = new pg.Client(conString);
-	await client.connect();
+// app.post('/renew_pucc', async (req, res) => {
+// 	var client = new pg.Client(conString);
+// 	await client.connect();
 	
-	console.log(req.body);
+// 	console.log(req.body);
 	
-	// console.log(id);
+// 	// console.log(id);
 	
-	var locationtimeid = generatelocationId();
-	// console.log(locationtimeid);
-	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
-	while (id.rows[0].count != 0){ // keeps generating until hits a new one
-		locationtimeid = generatelocationId();
-		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
-	}
+// 	var locationtimeid = generatelocationId();
+// 	// console.log(locationtimeid);
+// 	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+// 	while (id.rows[0].count != 0){ // keeps generating until hits a new one
+// 		locationtimeid = generatelocationId();
+// 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+// 	}
 	
-	var id = await client.query(`SELECT * FROM "PUCC" WHERE "PUCC_No" = '${req.body.pucc_no}'`);
-	console.log(id.rows);
+// 	var id = await client.query(`SELECT * FROM "PUCC" WHERE "PUCC_No" = '${req.body.pucc_no}'`);
+// 	console.log(id.rows);
 
-	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
+// 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
 	
-	// var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid}, ${})`); //PROBLEM HERE
+// 	// var query = await client.query(`INSERT INTO "Testing" VALUES ('${id.rows[0].Adhaar_No}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid}, ${})`); //PROBLEM HERE
+// });
+
+app.post('/renew_pucc', async (req, res) => {
+    const client = new pg.Client(conString);
+    await client.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        console.log("Processing renewal for:", req.body);
+
+        let locationtimeid = generatelocationId();
+        let idCheck = await client.query('SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = $1', [locationtimeid]);
+        
+        while (parseInt(idCheck.rows[0].count) !== 0) {
+            locationtimeid = generatelocationId();
+            idCheck = await client.query('SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = $1', [locationtimeid]);
+        }
+
+        const puccRes = await client.query('SELECT * FROM "PUCC" WHERE "PUCC_No" = $1', [req.body.pucc_no]);
+        
+        if (puccRes.rows.length === 0) {
+            throw new Error("PUCC Number not found in database.");
+        }
+
+        const adhaarNo = puccRes.rows[0].Adhaar_No;
+        const vendorParts = req.body.vendor.split(' , ');
+        const vendorId = parseInt(vendorParts[0]);
+        const vendorLocation = vendorParts[2];
+        const timestamp = toPostgresTimestamp(req.body.date + " " + req.body.slot);
+
+        await client.query(
+            `INSERT INTO "Location_Time" ("LocationTimeId", "Location", "Time_Slot") VALUES ($1, $2, $3)`,
+            [locationtimeid, vendorLocation, timestamp]
+        );
+
+        const testingQuery = `
+            INSERT INTO "Testing" ("Adhaar_No", "Vendor_No", "LocationTimeId", "Vehicle_No") 
+            VALUES ($1, $2, $3, $4)`;
+        await client.query(testingQuery, [adhaarNo, vendorId, locationtimeid, 'DL01PG9275']);
+
+        // commit
+        await client.query('COMMIT');
+        console.log("Data successfully committed to Database.");
+        
+        res.status(200).json({ success: true, message: "Appointment booked successfully!" });
+
+    } catch (error) {
+        // rollback
+        await client.query('ROLLBACK');
+        console.error("Transaction Failed (Roll Backed). Reason:", error.message);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        await client.end();
+    }
+});
+
+/**
+ * CONFLICT DEMONSTRATION ENDPOINT
+ * This simulates a "Lost Update" or Race Condition
+ */
+app.post('/simulate-conflict', async (req, res) => {
+    const { vehicle_id, new_status } = req.body;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+        
+        // Simulate a delay to allow another request to "conflict"
+        // In a real scenario, this happens if two people update the same vehicle at once
+        await new Promise(resolve => setTimeout(resolve, 5000)); 
+
+        const query = `UPDATE VEHICLE SET is_compliant = $1 WHERE vehicle_id = $2`;
+        await client.query(query, [new_status, vehicle_id]);
+
+        await client.query('COMMIT');
+        res.send("Update completed after delay.");
+    } catch (e) {
+        await client.query('ROLLBACK');
+        res.status(500).send("Conflict occurred.");
+    } finally {
+        client.release();
+    }
 });
 
 app.listen(PORT, () => {
