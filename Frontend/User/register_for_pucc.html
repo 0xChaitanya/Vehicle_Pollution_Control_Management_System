@@ -329,24 +329,44 @@
         }
 
         document.getElementById('btnok').addEventListener('click', async () => {
-            var returnResponse;
+            // var returnResponse;
+            // try {
+            //     returnResponse = await fetch('http://localhost:3000/new_pucc', {
+            //         method: "POST",
+
+            //         body: JSON.stringify(
+            //             await fetchAll()
+            //         ),
+
+            //         headers: { 'Content-type': 'application/json; charset=UTF-8' }
+
+            //     });
+            // }
+            // catch (error) {
+            //     console.log("Error detected : " + error);
+            // }
+
+            // return returnResponse.json();
             try {
-                returnResponse = await fetch('http://localhost:3000/new_pucc', {
-                    method: "POST",
+        const response = await fetch('http://localhost:3000/new_pucc', {
+            method: "POST",
+            body: JSON.stringify(await fetchAll()),
+            headers: { 'Content-type': 'application/json; charset=UTF-8' }
+        });
 
-                    body: JSON.stringify(
-                        await fetchAll()
-                    ),
+        const result = await response.json();
 
-                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
-
-                });
-            }
-            catch (error) {
-                console.log("Error detected : " + error);
-            }
-
-            return returnResponse.json();
+        if (response.ok) {
+            alert("Success: " + result.message);
+        } else {
+            // slot is already booked message
+            alert("Error: " + result.message);
+            // refresh slots here
+            location.reload(); 
+        }
+    } catch (error) {
+        console.log("Network/Server Error: " + error);
+    }
         });
 
     </script>

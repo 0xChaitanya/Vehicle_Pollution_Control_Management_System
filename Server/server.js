@@ -250,31 +250,71 @@ function toPostgresTimestamp(str) {
     return str;
 }
 
+// app.post('/new_pucc', async (req, res) => {
+// 	var client = new pg.Client(conString);
+// 	await client.connect();
+
+// 	var locationtimeid = generatelocationId();
+// 	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+// 	while (id.rows[0].count != 0){ // keeps generating until hits a new one
+// 		locationtimeid = generatelocationId();
+// 		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
+// 	}
+// 	// console.log(req.body);
+
+// 	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
+	
+// 	var query = await client.query(`INSERT INTO "Testing" VALUES ('${req.body.adhaar}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid})`);
+
+// 	var pucc_no = generatePUCCNumber();
+// 	id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
+// 	while (id.rows[0].count != 0){
+// 		pucc_no = generatePUCCNumber();
+// 		id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
+// 	}
+
+// 	var query = await client.query(`INSERT INTO "Registration" VALUES ('${req.body.adhaar}', '${req.body.vehicle_no}', '${pucc_no}')`);
+	
+// });
+
 app.post('/new_pucc', async (req, res) => {
-	var client = new pg.Client(conString);
-	await client.connect();
+    const client = new pg.Client(conString);
+    await client.connect();
 
-	var locationtimeid = generatelocationId();
-	var id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
-	while (id.rows[0].count != 0){ // keeps generating until hits a new one
-		locationtimeid = generatelocationId();
-		id = await client.query(`SELECT count(1) FROM "Location_Time" WHERE "LocationTimeId" = ${locationtimeid}`)
-	}
-	// console.log(req.body);
+    const location = req.body.vendor.split(' , ')[2];
+    const timeSlot = toPostgresTimestamp(req.body.date + " " + req.body.slot);
 
-	var query = await client.query(`INSERT INTO "Location_Time" VALUES (${locationtimeid}, '${req.body.vendor.split(' , ')[2]}', '${toPostgresTimestamp(req.body.date + " " + req.body.slot)}')`);
-	
-	var query = await client.query(`INSERT INTO "Testing" VALUES ('${req.body.adhaar}', ${parseInt(req.body.vendor.split(' , ')[0])}, ${locationtimeid})`);
+    try {
+        // check if slot is free
+        const check = await client.query(
+            `SELECT count(1) FROM "Location_Time" WHERE "Location" = $1 AND "Time" = $2`,
+            [location, timeSlot]
+        );
 
-	var pucc_no = generatePUCCNumber();
-	id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
-	while (id.rows[0].count != 0){
-		pucc_no = generatePUCCNumber();
-		id = await client.query(`SELECT count(1) FROM "Registration" WHERE "PUCC_No" = '${pucc_no}'`)
-	}
+        // simulate conflict
+        console.log(`Checking slot for ${req.body.adhaar}...`);
+        await new Promise(resolve => setTimeout(resolve, 5000)); 
 
-	var query = await client.query(`INSERT INTO "Registration" VALUES ('${req.body.adhaar}', '${req.body.vehicle_no}', '${pucc_no}')`);
-	
+        if (check.rows[0].count == 0) {
+            // try to insert
+            const locationtimeid = generatelocationId();
+            
+            await client.query(
+                `INSERT INTO "Location_Time" VALUES ($1, $2, $3)`,
+                [locationtimeid, location, timeSlot]
+            );
+
+            // user A won
+            res.json({ success: true, message: "Booking Confirmed!" });
+        } else {
+            // user b hits this
+            res.status(409).json({ success: false, message: "The slot was just booked by someone else! Please choose another one." });
+        }
+    } catch (error) {
+        res.status(409).json({ success: false, message: "The slot was just booked by someone else! Please choose another one." });
+    } finally {
+        await client.end();
+    }
 });
 
 // app.post('/renew_pucc', async (req, res) => {
